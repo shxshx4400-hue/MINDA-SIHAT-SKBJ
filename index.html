@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RAINBOW KART: MISI MINDA SIHAT - SK Bukit Jelutong</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 1200px;
+      max-height: 700px;
+      background: #87CEEB;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    /* HUD OVERLAY */
+    .hud-panel {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 3px solid #FF6B6B;
+      font-weight: bold;
+      color: #333;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+    .pos-badge {
+      background: #FFD700;
+      color: #000;
+      font-size: 22px;
+      padding: 4px 14px;
+      border-radius: 50px;
+      border: 2px solid #FFF;
+    }
+
+    /* CONTROLS OVERLAY FOR MOBILE */
+    .touch-controls {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .control-group {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    .btn-touch {
+      width: 70px;
+      height: 70px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 4px solid #4ECDC4;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #222;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.3);
+      active: transform 2px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn-touch:active, .btn-touch.active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+      background: #4ECDC4;
+      color: #FFF;
+    }
+    .btn-gas {
+      background: rgba(78, 205, 196, 0.9);
+      border-color: #2AB7CA;
+      width: 80px;
+      height: 80px;
+    }
+    .btn-brake {
+      background: rgba(255, 107, 107, 0.9);
+      border-color: #EE5253;
+    }
+
+    /* MODAL SCREENS */
+    .modal-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .menu-box {
+      background: linear-gradient(135deg, #FFF 0%, #FFF3E0 100%);
+      color: #333;
+      padding: 25px;
+      border-radius: 24px;
+      border: 6px solid #FF6B6B;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .menu-title {
+      font-size: 28px;
+      color: #FF4757;
+      margin-bottom: 5px;
+      text-shadow: 2px 2px #FFD32A;
+    }
+    .sub-title {
+      font-size: 14px;
+      color: #57606F;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    .btn-ui {
+      background: linear-gradient(180deg, #2ED573 0%, #26AF5F 100%);
+      color: white;
+      border: none;
+      padding: 12px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 8px;
+      box-shadow: 0 5px 0 #1E8449;
+      transition: all 0.1s;
+    }
+    .btn-ui:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #1E8449;
+    }
+    .credits-card {
+      margin-top: 15px;
+      background: #FFEAA7;
+      padding: 10px;
+      border-radius: 12px;
+      border: 2px dashed #FDCB6E;
+      font-size: 13px;
+      color: #2D3436;
+    }
+    .question-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+      width: 100%;
+    }
+    .btn-option {
+      background: #F1F2F6;
+      border: 3px solid #CED6E0;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #2F3542;
+      cursor: pointer;
+      text-align: left;
+    }
+    .btn-option:hover {
+      background: #70A1FF;
+      color: white;
+      border-color: #1E90FF;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+  <div class="hud-panel">
+    <div class="hud-card">
+      <span>KEDUDUKAN:</span>
+      <div id="hud-pos" class="pos-badge">1st</div>
+    </div>
+    <div class="hud-card">
+      <span>⏱️ MASA:</span>
+      <span id="hud-time">00:00</span>
+    </div>
+    <div class="hud-card">
+      <span>💖 MINTA SIHAT:</span>
+      <span id="hud-score">0</span>
+    </div>
+  </div>
+
+  <!-- TOUCH CONTROLS -->
+  <div class="touch-controls">
+    <div class="control-group">
+      <div class="btn-touch btn-brake" id="btnBrake">🛑</div>
+      <div class="btn-touch" id="btnJump">🦘</div>
+    </div>
+    <div class="control-group">
+      <div class="btn-touch btn-gas" id="btnGas">🚀</div>
+    </div>
+  </div>
+
+  <!-- MENU SCREEN -->
+  <div id="screen-menu" class="modal-screen">
+    <div class="menu-box">
+      <h1 class="menu-title">🌈 RAINBOW KART</h1>
+      <div class="sub-title">MISI MINDA SIHAT SK BUKIT JELUTONG</div>
+      
+      <p style="font-size: 14px; margin-bottom: 15px;">
+        Berlumba, kuasai bukit, kutip power-up dan selesaikan cabaran Minda Sihat untuk menjadi juara!
+      </p>
+
+      <button class="btn-ui" onclick="startGame()">▶️ MULA PERLUMBAAN</button>
+
+      <div class="credits-card">
+        <strong>Disediakan oleh:</strong><br>
+        <strong>Cg Norsyahira</strong><br>
+        Guru Bimbingan dan Kaunseling<br>
+        SK Bukit Jelutong
+      </div>
+    </div>
+  </div>
+
+  <!-- MISSION / QUESTION MODAL -->
+  <div id="screen-question" class="modal-screen hidden">
+    <div class="menu-box">
+      <h2 style="color:#2ED573; margin-bottom:100px;">🧠 CABARAN MINDA SIHAT!</h2>
+      <p id="q-text" style="font-size: 16px; font-weight:bold; margin-bottom:15px; color:#333;"></p>
+      <div id="q-options" class="question-options"></div>
+    </div>
+  </div>
+
+  <!-- FINISH / RESULTS SCREEN -->
+  <div id="screen-finish" class="modal-screen hidden">
+    <div class="menu-box">
+      <h1 id="res-title" class="menu-title">🏆 TAMAT PERLUMBAAN!</h1>
+      <p id="res-pos" style="font-size: 20px; font-weight:bold; color:#2E86DE; margin:10px 0;"></p>
+      <p id="res-score" style="font-size: 16px; margin-bottom:15px;"></p>
+      
+      <p id="res-msg" style="font-size: 14px; background:#ECCC68; padding:10px; border-radius:10px; margin-bottom:15px; font-weight:bold; color:#222;"></p>
+
+      <button class="btn-ui" onclick="restartGame()">🔄 MAIN LAGI</button>
+
+      <div class="credits-card">
+        <strong>Disediakan oleh:</strong><br>
+        <strong>Cg Norsyahira</strong><br>
+        Guru Bimbingan dan Kaunseling SK Bukit Jelutong
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- CANVAS & GAME ENGINE ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = document.getElementById('gamecontainer')?.clientWidth || window.innerWidth;
+  canvas.height = document.getElementById('gamecontainer')?.clientHeight || window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// GAME STATE
+let gameState = 'MENU'; // MENU, PLAYING, QUESTION, FINISH
+let raceStartTime = 0;
+let raceTime = 0;
+let score = 0;
+
+// INPUT HANDLING
+const keys = { gas: false, brake: false, jump: false };
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.gas = true;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.brake = true;
+  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.jump = true;
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.gas = false;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.brake = false;
+  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.jump = false;
+});
+
+// TOUCH BUTTON BINDINGS
+function bindTouch(id, keyProp) {
+  const btn = document.getElementById(id);
+  if(!btn) return;
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyProp] = true; btn.classList.add('active'); });
+  btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyProp] = false; btn.classList.remove('active'); });
+  btn.addEventListener('mousedown', () => { keys[keyProp] = true; btn.classList.add('active'); });
+  btn.addEventListener('mouseup', () => { keys[keyProp] = false; btn.classList.remove('active'); });
+}
+bindTouch('btnGas', 'gas');
+bindTouch('btnBrake', 'brake');
+bindTouch('btnJump', 'jump');
+
+// TRACK CONFIGURATION
+const TRACK_LENGTH = 12000;
+function getTerrainHeight(x) {
+  if (x < 300) return 400; // Flat start line
+  if (x > TRACK_LENGTH - 500) return 400; // Flat finish line
+  // Procedural hills and valleys
+  return 400 + Math.sin(x * 0.003) * 80 + Math.cos(x * 0.008) * 40;
+}
+
+// KARTS (PLAYER & AI)
+class Kart {
+  constructor(name, color, isPlayer = false, offsetStart = 0) {
+    this.name = name;
+    this.color = color;
+    this.isPlayer = isPlayer;
+    this.x = 100 + offsetStart;
+    this.y = 350;
+    this.vx = 0;
+    this.vy = 0;
+    this.angle = 0;
+    this.isGrounded = false;
+    this.boostTimer = 0;
+    this.shieldTimer = 0;
+    this.maxSpeed = isPlayer ? 11 : 9.5 + Math.random() * 1.5;
+    this.finished = false;
+    this.finishTime = 0;
+  }
+
+  update() {
+    if (this.finished) return;
+
+    // Apply Terrain Height
+    const groundY = getTerrainHeight(this.x);
+    const nextGroundY = getTerrainHeight(this.x + 15);
+    const terrainAngle = Math.atan2(nextGroundY - groundY, 15);
+
+    // AI Logic
+    if (!this.isPlayer) {
+      this.vx += 0.18; // Constant AI drive
+      if (Math.random() < 0.01 && this.isGrounded && Math.sin(this.x * 0.003) > 0.5) {
+        this.vy = -8; // AI jumps on hills
+      }
+    } else {
+      // Player Controls
+      if (keys.gas) this.vx += 0.25;
+      if (keys.brake) this.vx -= 0.3;
+      if (keys.jump && this.isGrounded) {
+        this.vy = -9.5;
+        this.isGrounded = false;
+      }
+    }
+
+    // Boost Effect
+    if (this.boostTimer > 0) {
+      this.vx += 0.35;
+      this.boostTimer--;
+    }
+
+    // Shield Timer
+    if (this.shieldTimer > 0) this.shieldTimer--;
+
+    // Friction & Gravity
+    this.vx *= 0.98;
+    const currentMax = this.boostTimer > 0 ? this.maxSpeed * 1.4 : this.maxSpeed;
+    this.vx = Math.min(Math.max(this.vx, -3), currentMax);
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Ground Collision
+    if (this.y >= groundY - 15) {
+      this.y = groundY - 15;
+      this.vy = 0;
+      this.isGrounded = true;
+      this.angle = terrainAngle;
+    } else {
+      this.vy += 0.4; // Gravity
+      this.isGrounded = false;
+      this.angle += 0.02; // Rotate in air
+    }
+
+    // Check Finish
+    if (this.x >= TRACK_LENGTH) {
+      this.x = TRACK_LENGTH;
+      this.finished = true;
+      this.finishTime = raceTime;
+    }
+  }
+
+  draw(cameraX) {
+    const drawX = this.x - cameraX;
+    const drawY = this.y;
+
+    ctx.save();
+    ctx.translate(drawX, drawY);
+    ctx.rotate(this.angle);
+
+    // Kart Body
+    ctx.fillStyle = this.color;
+    ctx.fillRect(-20, -12, 40, 16);
+
+    // Driver Head
+    ctx.fillStyle = '#FFCC80';
+    ctx.beginPath();
+    ctx.arc(0, -18, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Helmet
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, -22, 10, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    // Wheels
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(-12, 6, 7, 0, Math.PI * 2);
+    ctx.arc(12, 6, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shield Aura
+    if (this.shieldTimer > 0) {
+      ctx.strokeStyle = 'rgba(78, 205, 196, 0.8)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, -5, 30, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Name Label
+    ctx.restore();
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(this.name, drawX - 15, drawY - 35);
+  }
+}
+
+// POWER-UPS & ITEMS
+const items = [];
+function spawnItems() {
+  items.length = 0;
+  for (let x = 800; x < TRACK_LENGTH - 800; x += 400 + Math.random() * 300) {
+    const type = Math.random() < 0.4 ? 'QUESTION' : (Math.random() < 0.5 ? 'BOOST' : 'HEART');
+    items.push({ x, y: getTerrainHeight(x) - 35, type, collected: false });
+  }
+}
+
+// QUESTION BANK
+const questions = [
+  {
+    q: "Apakah tindakan terbaik apabila berasa sangat marah atau tertekan?",
+    opts: ["Tarik nafas perlahan & berehat sebentar", "Menjerit kepada rakan", "Memendam perasaan", "Merosakkan harta benda"],
+    ans: 0,
+    msg: "Syabas! Mengambil nafas dalam membantu menenangkan minda."
+  },
+  {
+    q: "Bagaimanakah cara membantu rakan yang kelihatan bersedih di sekolah?",
+    opts: ["Mengejeknya", "Mendengar & memberi sokongan", "Meninggalkannya berseorangan", "Ketawa dengannya"],
+    ans: 1,
+    msg: "Tepat sekali! Sikap prihatin membina persahabatan yang sihat."
+  },
+  {
+    q: "Siapakah yang boleh anda temui di sekolah jika menghadapi masalah emosi?",
+    opts: ["Guru Bimbingan & Kaunseling", "Pembuli", "Orang asing", "Tiada sesiapa"],
+    ans: 0,
+    msg: "Betul! Guru Kaunseling sedia membantu anda pada bila-bila masa."
+  }
+];
+
+let karts = [];
+let playerKart = null;
+
+function startGame() {
+  document.getElementById('screen-menu').classList.add('hidden');
+  document.getElementById('screen-finish').classList.add('hidden');
+
+  playerKart = new Kart("Anda", "#FF4757", true, 0);
+  karts = [
+    playerKart,
+    new Kart("Bobi", "#2ED573", false, -30),
+    new Kart("Kiki", "#1E90FF", false, -60),
+    new Kart("Siti", "#FFA502", false, -90)
+  ];
+
+  spawnItems();
+  score = 0;
+  raceStartTime = Date.now();
+  gameState = 'PLAYING';
+  requestAnimationFrame(gameLoop);
+}
+
+// GAME LOOP
+function gameLoop() {
+  if (gameState !== 'PLAYING') return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Update Race Time
+  raceTime = (Date.now() - raceStartTime) / 1000;
+  document.getElementById('hud-time').innerText = raceTime.toFixed(1) + 's';
+
+  // Camera tracking
+  const cameraX = playerKart.x - 150;
+
+  // 1. Draw Sky & Parallax Background
+  ctx.fillStyle = '#87CEEB';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Decorative Clouds
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  for (let i = 0; i < 10; i++) {
+    const cloudX = ((i * 300 - cameraX * 0.2) % (canvas.width + 400)) - 100;
+    ctx.beginPath();
+    ctx.arc(cloudX, 80 + (i % 3) * 20, 30, 0, Math.PI * 2);
+    ctx.arc(cloudX + 25, 70, 35, 0, Math.PI * 2);
+    ctx.arc(cloudX + 50, 80, 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. Draw Terrain (Track)
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height);
+  for (let x = 0; x <= canvas.width + 20; x += 10) {
+    const worldX = cameraX + x;
+    const worldY = getTerrainHeight(worldX);
+    ctx.lineTo(x, worldY);
+  }
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.fillStyle = '#7CEC99'; // Grass ground
+  ctx.fill();
+
+  // Track Surface Line
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#FF6B6B'; // Rainbow Track border
+  ctx.stroke();
+
+  // Finish Line Marker
+  const finishDrawX = TRACK_LENGTH - cameraX;
+  if (finishDrawX > -50 && finishDrawX < canvas.width + 50) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(finishDrawX, getTerrainHeight(TRACK_LENGTH) - 100, 10, 100);
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText('🏁 GARISAN PENAMAT', finishDrawX - 60, getTerrainHeight(TRACK_LENGTH) - 110);
+  }
+
+  // 3. Update & Draw Items
+  items.forEach(item => {
+    if (item.collected) return;
+    const drawX = item.x - cameraX;
+    if (drawX > -30 && drawX < canvas.width + 30) {
+      ctx.font = '24px sans-serif';
+      let icon = '❓';
+      if (item.type === 'BOOST') icon = '🚀';
+      if (item.type === 'HEART') icon = '💖';
+      ctx.fillText(icon, drawX - 12, item.y);
+
+      // Collision Check with Player
+      if (Math.abs(playerKart.x - item.x) < 30 && Math.abs(playerKart.y - item.y) < 30) {
+        item.collected = true;
+        if (item.type === 'BOOST') {
+          playerKart.boostTimer = 120;
+        } else if (item.type === 'HEART') {
+          score += 100;
+          document.getElementById('hud-score').innerText = score;
+        } else if (item.type === 'QUESTION') {
+          triggerQuestion();
+        }
+      }
+    }
+  });
+
+  // 4. Update & Draw Karts
+  karts.forEach(k => k.update());
+  
+  // Sort Karts by position (Distance X) for ranking
+  const ranked = [...karts].sort((a, b) => b.x - a.x);
+  const playerRank = ranked.findIndex(k => k.isPlayer) + 1;
+  const rankSuffix = ["1st", "2nd", "3rd", "4th"][playerRank - 1];
+  document.getElementById('hud-pos').innerText = rankSuffix;
+
+  karts.forEach(k => k.draw(cameraX));
+
+  // 5. Check Game Over / Victory
+  if (playerKart.finished) {
+    gameState = 'FINISH';
+    showFinishScreen(playerRank, rankSuffix);
+    return;
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// QUESTION MODAL LOGIC
+function triggerQuestion() {
+  gameState = 'QUESTION';
+  const qObj = questions[Math.floor(Math.random() * questions.length)];
+  document.getElementById('q-text').innerText = qObj.q;
+  
+  const optsContainer = document.getElementById('q-options');
+  optsContainer.innerHTML = '';
+
+  qObj.opts.forEach((optText, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-option';
+    btn.innerText = optText;
+    btn.onclick = () => {
+      if (idx === qObj.ans) {
+        score += 200;
+        playerKart.boostTimer = 180; // Powerful boost reward!
+        playerKart.shieldTimer = 180;
+        document.getElementById('hud-score').innerText = score;
+        alert("✅ " + qObj.msg + " (+200 Mata & Super Boost!)");
+      } else {
+        alert("💡 Petunjuk: Pilih tindakan yang paling aman dan positif untuk minda sihat.");
+      }
+      document.getElementById('screen-question').classList.add('hidden');
+      gameState = 'PLAYING';
+      requestAnimationFrame(gameLoop);
+    };
+    optsContainer.appendChild(btn);
+  });
+
+  document.getElementById('screen-question').classList.remove('hidden');
+}
+
+function showFinishScreen(rankNum, rankSuffix) {
+  document.getElementById('screen-finish').classList.remove('hidden');
+  document.getElementById('res-pos').innerText = `Kedudukan Akhir: ${rankSuffix}`;
+  document.getElementById('res-score').innerText = `Mata Minda Sihat: ${score} | Masa: ${raceTime.toFixed(1)}s`;
+
+  let msg = "Syabas! Anda telah melengkapkan perlumbaan Minda Sihat dengan cemerlang!";
+  if (rankNum === 1) msg = "🏆 JUARA! Anda bukan sahaja laju, tetapi hebat dalam mengurus Minda Sihat!";
+  document.getElementById('res-msg').innerText = msg;
+}
+
+function restartGame() {
+  startGame();
+}
+</script>
+</body>
+</html>
